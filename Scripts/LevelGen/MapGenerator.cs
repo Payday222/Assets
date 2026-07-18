@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.VisualScripting;
+using UnityEditor.Tilemaps;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -10,6 +12,8 @@ public class Room {
     public int width;
     public int height;
     public Vector2Int center;
+    public int centerX;
+    public int centerY;
 
     public Room(int x, int y, int width, int height) {
         this.x = x;
@@ -17,6 +21,9 @@ public class Room {
         this.width = width;
         this.height = height;
         this.center = new Vector2Int(x + width / 2, y + height / 2);
+
+        this.centerX = x + (width/2);
+        this.centerY = y + (height/2);  
     }
 }
 
@@ -77,7 +84,7 @@ public class MapGenerator : MonoBehaviour {
                 rooms.Add(newRoom);
             }
         }
-    
+        ConnectAllRooms();
         RenderTilemaps();
     }
         private void CarveRoom(Room room) {
@@ -100,6 +107,45 @@ public class MapGenerator : MonoBehaviour {
             }
         }
     }
+        }
+
+        private void CarveHorizontalCorridor(int xStart, int xEnd, int yPosition) {
+            int start = Mathf.Min(xStart, xEnd);
+            int end = Mathf.Max(xStart, xEnd);
+            
+            for(int x = start; x <= end; x++) {
+                if(x >= 0 && x < mapWidth && yPosition >= 0 && yPosition < mapHeight) {
+                    Vector3Int tilePos = new Vector3Int(x,yPosition,0);
+                    grid[x, yPosition] = 1;
+                }
+            }
+        }
+
+        private void CarveVerticalCorridor(int yStart, int yEnd, int xPosition) {
+            int start = Mathf.Min(yStart, yEnd);
+            int end = Mathf.Max(yStart, yEnd);
+
+            for(int y = start; y <= end; y++) {
+                if(xPosition >= 0 && xPosition < mapWidth && y < mapHeight) {
+                    Vector3Int tilePos = new Vector3Int(xPosition, y ,0);
+                     grid[xPosition, y] = 1;
+                }
+            }
+        }
+
+        public void ConnectAllRooms() {
+            for(int i = 1; i < rooms.Count; i++) {
+                Room previousRoom = rooms[i - 1];
+                Room currentRoom = rooms[i];
+
+             if (Random.Range(0, 2) == 0) {
+            CarveHorizontalCorridor(previousRoom.centerX, currentRoom.centerX, previousRoom.centerY);
+            CarveVerticalCorridor(previousRoom.centerY, currentRoom.centerY, currentRoom.centerX);
+        } else {
+            CarveVerticalCorridor(previousRoom.centerY, currentRoom.centerY, previousRoom.centerX);
+            CarveHorizontalCorridor(previousRoom.centerX, currentRoom.centerX, currentRoom.centerY);
+        }
+            }
         }
     }
     
