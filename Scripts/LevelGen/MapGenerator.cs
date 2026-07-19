@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEditor.Tilemaps;
 using UnityEngine;
@@ -29,6 +30,9 @@ public class Room {
 
 
 public class MapGenerator : MonoBehaviour {
+    [Header("Entity spawning")]
+    public Rigidbody2D PlayerRb;
+    public Rigidbody2D exitRb;
     [Header("Tilemap generator")]
     public Tilemap floorTilemap;
     public Tilemap wallTilemap;
@@ -43,7 +47,8 @@ public class MapGenerator : MonoBehaviour {
     public int maxROomSize;
 
     private int[,] grid;
-    private List<Room> rooms = new List<Room>();
+    public List<Room> rooms = new List<Room>();
+    public int playerSpawnRoom;
 
 
     void Start() {
@@ -86,11 +91,13 @@ public class MapGenerator : MonoBehaviour {
         }
         ConnectAllRooms();
         RenderTilemaps();
+        SpawnPlayer();
+        SpawnExit();
     }
         private void CarveRoom(Room room) {
-            for (int x = room.x + 1; x < room.x + room.width - 1; x++)
+            for (int x = room.x; x < room.x + room.width - 1; x++)
         {
-            for (int y = room.y + 1; y < room.y + room.height - 1; y++)
+            for (int y = room.y; y < room.y + room.height - 1; y++)
             {
                 grid[x, y] = 1; // Mark as floor data
             }
@@ -146,6 +153,34 @@ public class MapGenerator : MonoBehaviour {
             CarveHorizontalCorridor(previousRoom.centerX, currentRoom.centerX, currentRoom.centerY);
         }
             }
+        }
+
+        public void SpawnPlayer() {
+            playerSpawnRoom = Random.Range(0, rooms.Count);
+            int spawnX = rooms[playerSpawnRoom].centerX;
+            int spawnY = rooms[playerSpawnRoom].centerY;
+            Vector2 spawnPos = new Vector2(spawnX, spawnY);
+
+            PlayerRb.position = spawnPos;
+        }
+        public void SpawnExit() {
+            int SpawnExitRoom = Random.Range(0, rooms.Count);
+            Debug.Log($"trying exit at: {SpawnExitRoom}, player at: {playerSpawnRoom}");
+            if(SpawnExitRoom != playerSpawnRoom) {
+                int exitX = rooms[SpawnExitRoom].centerX;
+                int exitY = rooms[SpawnExitRoom].centerY;
+                Vector2 exitPos = new Vector2(exitX, exitY);
+
+                exitRb.position = exitPos;
+            } else {
+                SpawnExitRoom = rooms.Count - playerSpawnRoom;
+                Debug.Log($"trying exit at: {SpawnExitRoom}, player at: {playerSpawnRoom}");
+                 int exitX = rooms[SpawnExitRoom].centerX;
+                int exitY = rooms[SpawnExitRoom].centerY;
+                Vector2 exitPos = new Vector2(exitX, exitY);
+            }
+
+            
         }
     }
     
