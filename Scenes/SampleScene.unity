@@ -648,10 +648,13 @@ MonoBehaviour:
   maxEnemiesPerRoom: 5
   minEnemiesPerRoom: 1
   exitRb: {fileID: 1873277933}
+  doorPrefab: {fileID: 118490057335102075, guid: 8daf7dc257d40384aa340138b07066e7, type: 3}
+  doorParent: {fileID: 0}
   floorTilemap: {fileID: 658214503}
   wallTilemap: {fileID: 1729891112}
   floorTile: {fileID: 11400000, guid: 9067fafc0342ea4828267baed244a759, type: 2}
   wallTile: {fileID: 11400000, guid: 2c95fcefef5bc9c13b6c5043a4cb43ea, type: 2}
+  doorTile: {fileID: 11400000, guid: 1c73a8f32197a1ac9b1f4deedb2c53b9, type: 2}
   mapWidth: 100
   mapHeight: 100
   maxRooms: 20
