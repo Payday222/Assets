@@ -12,6 +12,9 @@ public class enemy : MonoBehaviour
 
     private void Start() {
         rb = GetComponent<Rigidbody2D>();
+
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        playerRb = playerObj.GetComponent<Rigidbody2D>();
     }
     private void FixedUpdate() {
         //* handle player detection
