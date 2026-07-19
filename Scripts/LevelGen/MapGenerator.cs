@@ -45,6 +45,7 @@ public class MapGenerator : MonoBehaviour {
     public Tilemap wallTilemap;
     public TileBase floorTile;
     public TileBase wallTile;
+    public TileBase doorTile;
 
     [Header("Generation settings")]
     public int mapWidth;
@@ -118,36 +119,104 @@ public class MapGenerator : MonoBehaviour {
             Vector3Int tilePos = new Vector3Int(x,y,0);
             if(grid[x,y] == 1) {
                 floorTilemap.SetTile(tilePos, floorTile);
-            } else {
+            } else if(grid[x,y] == 0) {
                 wallTilemap.SetTile(tilePos, wallTile);
+            } else if(grid[x,y] == 2) {
+                wallTilemap.SetTile(tilePos, doorTile);
             }
         }
     }
         }
 
-        private void CarveHorizontalCorridor(int xStart, int xEnd, int yPosition) {
-            int start = Mathf.Min(xStart, xEnd);
-            int end = Mathf.Max(xStart, xEnd);
+       private void CarveHorizontalCorridor(int xStart, int xEnd, int yPosition) {
+    int start = Mathf.Min(xStart, xEnd);
+    int end = Mathf.Max(xStart, xEnd);
+    
+    // Track if we have placed the starting doors and ending doors for this specific corridor execution
+    bool placedStartDoors = false;
+
+    for (int x = start; x <= end; x++) {
+        // Ensure we are inside map boundaries for both lanes of the 2-wide corridor
+        if (x >= 0 && x < mapWidth && yPosition >= 0 && yPosition + 1 < mapHeight) {
             
-            for(int x = start; x <= end; x++) {
-                if(x >= 0 && x < mapWidth && yPosition >= 0 && yPosition < mapHeight) {
-                    Vector3Int tilePos = new Vector3Int(x,yPosition,0);
-                    grid[x, yPosition] = 1;
-                }
+            // Check if both lanes are currently solid walls (0)
+            bool isCurrentTileWall = (grid[x, yPosition] == 0 && grid[x, yPosition + 1] == 0);
+            
+            // Look ahead: is the NEXT step going to be a floor/room?
+            // Look ahead: Is the NEXT step a floor, and is that floor actually inside a ROOM?
+            bool isNextTileFloor = false;
+            if (x + 1 <= end) {
+                bool hasFloorAhead = (grid[x + 1, yPosition] == 1 || grid[x + 1, yPosition + 1] == 1);
+                // Only count it as a room entry if it's within the boundaries of an actual room from your list
+                isNextTileFloor = hasFloorAhead && IsInsideAnyRoom(x + 1, yPosition);
+}
+
+            // 1. PLACE STARTING DOORS: The very first transition from a room into a wall
+            if (isCurrentTileWall && !placedStartDoors) {
+                grid[x, yPosition] = 2;
+                grid[x, yPosition + 1] = 2;
+                placedStartDoors = true; 
+                continue; // Skip carving regular floor over these doors on this loop cycle
             }
+
+            // 2. PLACE ENDING DOORS: The final transition from wall back into the target room
+            if (isCurrentTileWall && isNextTileFloor) {
+                grid[x, yPosition] = 2;
+                grid[x, yPosition + 1] = 2;
+                continue;
+            }
+
+            // Carve normal 2-wide floor tiles if it's not a door boundary
+            grid[x, yPosition] = 1;
+            grid[x, yPosition + 1] = 1;
         }
+    }
+}
 
         private void CarveVerticalCorridor(int yStart, int yEnd, int xPosition) {
-            int start = Mathf.Min(yStart, yEnd);
-            int end = Mathf.Max(yStart, yEnd);
+    int start = Mathf.Min(yStart, yEnd);
+    int end = Mathf.Max(yStart, yEnd);
 
-            for(int y = start; y <= end; y++) {
-                if(xPosition >= 0 && xPosition < mapWidth && y < mapHeight) {
-                    Vector3Int tilePos = new Vector3Int(xPosition, y ,0);
-                     grid[xPosition, y] = 1;
-                }
+    // Track if we have placed the starting doors for this specific corridor execution
+    bool placedStartDoors = false;
+
+    for (int y = start; y <= end; y++) {
+        // Ensure we are inside map boundaries for both lanes of the 2-wide corridor
+        if (xPosition >= 0 && xPosition + 1 < mapWidth && y >= 0 && y < mapHeight) {
+            
+            // Check if both lanes are currently solid walls (0)
+            bool isCurrentTileWall = (grid[xPosition, y] == 0 && grid[xPosition + 1, y] == 0);
+            
+            // Look ahead: is the NEXT step going to be a floor/room?
+            // Look ahead: Is the NEXT step a floor, and is that floor actually inside a ROOM?
+            bool isNextTileFloor = false;
+            if (y + 1 <= end) {
+                bool hasFloorAhead = (grid[xPosition, y + 1] == 1 || grid[xPosition + 1, y + 1] == 1);
+                // Only count it as a room entry if it's within the boundaries of an actual room from your list
+                isNextTileFloor = hasFloorAhead && IsInsideAnyRoom(xPosition, y + 1);
+}
+
+            // 1. PLACE STARTING DOORS: Moving from a room into a wall
+            if (isCurrentTileWall && !placedStartDoors) {
+                grid[xPosition, y] = 2;
+                grid[xPosition + 1, y] = 2;
+                placedStartDoors = true;
+                continue;
             }
+
+            // 2. PLACE ENDING DOORS: The last wall tile before hitting the target room floor
+            if (isCurrentTileWall && isNextTileFloor) {
+                grid[xPosition, y] = 2;
+                grid[xPosition + 1, y] = 2;
+                continue;
+            }
+
+            // Carve normal 2-wide floor tiles if it's not a door boundary
+            grid[xPosition, y] = 1;
+            grid[xPosition + 1, y] = 1;
         }
+    }
+}
 
         public void ConnectAllRooms() {
             for(int i = 1; i < rooms.Count; i++) {
@@ -218,6 +287,17 @@ public class MapGenerator : MonoBehaviour {
             }
           }
         }
+        private bool IsInsideAnyRoom(int x, int y) {
+            foreach (Room room in rooms) {
+            // Check if the coordinate falls cleanly within the boundaries of an existing room
+              if (x >= room.x && x < room.x + room.width &&
+                  y >= room.y && y < room.y + room.height) {
+                     return true;
+              }
+            }
+         return false;
+        }
+        
     }
     
 

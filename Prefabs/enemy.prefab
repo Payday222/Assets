@@ -102,6 +102,7 @@ MonoBehaviour:
   playerRb: {fileID: 0}
   rb: {fileID: 0}
   detectionRadius: 10
+  moveSpeed: 1
 --- !u!61 &-7054512019672072676
 BoxCollider2D:
   m_ObjectHideFlags: 0
