@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEditor.Tilemaps;
@@ -32,6 +33,11 @@ public class Room {
 public class MapGenerator : MonoBehaviour {
     [Header("Entity spawning")]
     public Rigidbody2D PlayerRb;
+    public int EnemySpawnChance = 2;
+    //controls the spawning of enemies in a 1/x fashion, meaning that if this is set to 2, the chance to spawn enemies in a room will be 1/2, if 3 then 1/3 etc.
+    public GameObject enemyPrefab;
+    public int maxEnemiesPerRoom = 5;
+    public int minEnemiesPerRoom = 1;
     public Rigidbody2D exitRb;
     [Header("Tilemap generator")]
     public Tilemap floorTilemap;
@@ -49,6 +55,7 @@ public class MapGenerator : MonoBehaviour {
     private int[,] grid;
     public List<Room> rooms = new List<Room>();
     public int playerSpawnRoom;
+    public int SpawnExitRoom;
 
 
     void Start() {
@@ -93,6 +100,7 @@ public class MapGenerator : MonoBehaviour {
         RenderTilemaps();
         SpawnPlayer();
         SpawnExit();
+        SpawnEnemies();
     }
         private void CarveRoom(Room room) {
             for (int x = room.x; x < room.x + room.width - 1; x++)
@@ -164,7 +172,7 @@ public class MapGenerator : MonoBehaviour {
             PlayerRb.position = spawnPos;
         }
         public void SpawnExit() {
-            int SpawnExitRoom = Random.Range(0, rooms.Count);
+            SpawnExitRoom = Random.Range(0, rooms.Count);
             Debug.Log($"trying exit at: {SpawnExitRoom}, player at: {playerSpawnRoom}");
             if(SpawnExitRoom != playerSpawnRoom) {
                 int exitX = rooms[SpawnExitRoom].centerX;
@@ -181,6 +189,33 @@ public class MapGenerator : MonoBehaviour {
             }
 
             
+        }
+        public void SpawnEnemies() {
+          for(int i = 0; i < rooms.Count; i++) {
+            if(i == playerSpawnRoom || i == SpawnExitRoom) {
+                continue;
+            }
+
+            int roll = Random.Range(1, EnemySpawnChance + 1);
+
+            if(roll == EnemySpawnChance) {
+                Debug.Log($"Spawning enemies in room: {i}");
+                int enemyCount = Random.Range(minEnemiesPerRoom, maxEnemiesPerRoom + 1);
+
+                for(int j = 0; j < enemyCount; j++) {
+                int halfW = (rooms[i].width / 2) - 1;
+                int halfH = (rooms[i].height / 2) - 1;
+
+                float enemyX = rooms[i].centerX + Random.Range(-halfW, halfW + 1) + 0.5f;
+                float enemyY = rooms[i].centerY + Random.Range(-halfH, halfH + 1) + 0.5f;
+                
+                Vector3 enemyPos = new Vector3(enemyX, enemyY, 0f);
+
+                GameObject newEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
+                }
+
+            }
+          }
         }
     }
     
