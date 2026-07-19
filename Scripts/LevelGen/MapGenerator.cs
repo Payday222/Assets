@@ -31,6 +31,7 @@ public class Room {
 
 
 public class MapGenerator : MonoBehaviour {
+    public static MapGenerator Instance { get; private set; } //singleton
     [Header("Entity spawning")]
     public Rigidbody2D PlayerRb;
     public int EnemySpawnChance = 2;
@@ -52,7 +53,7 @@ public class MapGenerator : MonoBehaviour {
     public int minRoomSize;
     public int maxROomSize;
 
-    private int[,] grid;
+    public int[,] grid;
     public List<Room> rooms = new List<Room>();
     public int playerSpawnRoom;
     public int SpawnExitRoom;
